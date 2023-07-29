@@ -1,0 +1,140 @@
+---
+title: "ASN7. Formative Assessment"
+format: html
+editor: visual
+---
+
+## Introduction
+
+To test each student's proficiency in basic R programming for data preparation and visualization, each student will use the given data and what they have learned to make the closest version of Figure 2A from the Appendix section of Deschênes et al. (2017). The original figure is shown below.
+
+![](fig2a.png){fig-align="center" width="405"}
+
+Your figure does not have to aesthetically match the original graph. For example, the graph below is considered an acceptable replica.
+
+![](rep_fig2a.png){fig-align="center" width="350"}
+
+## Instructions
+
+1.  Clone the repository spring-asn-7-*YourUsername* to your Posit Cloud account.
+
+2.  Read all the CSV files inside the EPA AMPD folder into the RStudio Environment. These files contain NOx emissions data from each electricity-generating facility for each month-year. Important variables include:
+
+    **State** - The state where the electricity-generating facility is located
+
+    **County** - The county where the electricity-generating facility is located. Note that the same county name can appear in different states.
+
+    **Month** - The month number in the year
+
+    **Year** - The year number
+
+    **NOx..tons.** - The quantity of NOx emissions from each electricity-generating facility. We can assume that NA values indicate that no NOx was emitted in that unit-month.
+
+    ```{r}
+    library("tidyverse")
+    library("lubridate")
+    ```
+
+    ```{r}
+    df1997<-read.csv("EPA AMPD/emission_1997.csv")
+    df1998<-read.csv("EPA AMPD/emission_1998.csv")
+    df1999<-read.csv("EPA AMPD/emission_1999.csv")
+    df2000<-read.csv("EPA AMPD/emission_2000.csv")
+    df2001<-read.csv("EPA AMPD/emission_2001.csv")
+    df2002<-read.csv("EPA AMPD/emission_2002.csv")
+    df2003<-read.csv("EPA AMPD/emission_2003.csv")
+    df2004<-read.csv("EPA AMPD/emission_2004.csv")
+    df2005<-read.csv("EPA AMPD/emission_2005.csv")
+    df2006<-read.csv("EPA AMPD/emission_2006.csv")
+    df2007<-read.csv("EPA AMPD/emission_2007.csv")
+    df<-rbind(df1997, df1998, df1999, df2000, df2001, df2002, df2003, df2004, df2005, df2006, df2007)
+    ```
+
+3.  Read the t2a_obs.csv file into the RStudio Environment. This file is a list of all counties that are used in the Deschênes et al. (2017) paper. Each county appears in the data 22 times, two times a year (for summer and non-summer months) for 11 years. Important variables include:
+
+    **State** - The state where the electricity-generating facility is located
+
+    **County** - The county where the electricity-generating facility is located. Note that the same county name can appear in different states.
+
+    **smm** - An indicator for the summer season. The variable is equal to 1 for May, June, July, August, and September and is equal to 0 otherwise.
+
+    **Year** - The year number
+
+    **nbp** - An indicator of whether the county is regulated by the NOx Budget Program or not.
+
+    ```{r}
+    df2 <- read.csv("t2a_obs.csv")
+    ```
+
+4.  Use online resources and what you have learned to replicate the figure to the best of your ability.
+
+    ```{r}
+    df3<-df %>% 
+      mutate(smm=ifelse(Month>=5 & Month<=9,1,0))
+    ```
+
+```{r}
+df4<-df3%>%
+  mutate(NOx..tons.=ifelse(is.na(NOx..tons.),0,NOx..tons.))
+
+df_change_unit<- df4%>%
+  group_by(County,State, smm,Year) %>%
+  summarize(NOx..tons. = sum(NOx..tons.))
+```
+
+```{r}
+merge_data <- merge(df_change_unit,df2, 
+                    by=c("County","State","smm","Year"), all.y=TRUE)
+
+df_new_merge_data <- merge_data %>%
+   mutate(NOx..tons.=ifelse(is.na(NOx..tons.),0,NOx..tons.))
+```
+
+```{r}
+#x axis = year
+#y axis = NOx in nbp states
+#smm = seasons
+
+df_nbp<-df_new_merge_data %>%
+  filter(nbp == 1) %>%
+  mutate(smm = as.factor(smm)) %>%
+  mutate(NOx..tons.= ifelse(smm == 0,NOx..tons.* 5/7,NOx..tons.))%>%
+  mutate(NOx..tons. = NOx..tons./1000000)%>%
+  group_by(Year, smm) %>%
+  summarize(NOx..tons. = sum(NOx..tons.))
+
+ggplot(df_nbp, aes(x = Year, y = NOx..tons., color = smm))+geom_line() + geom_point() + scale_x_continuous(breaks=1997:2007)+
+  xlab("Year")+
+  ylab("Summer-Equivalent Seasonal NOx Emissions (Mil Tons) for NBP States")
+```
+
+Hint: To calculate summer-equivalent NOx emissions in the winter, you need to multiply total NOx emissions during the winter by 5/7.
+
+5.  Let Thanicha or a PRM know once you have finished making the graph. To test your understanding, we will ask you to modify your script on the spot.
+
+6.  Once your modifications are approved, you will pass the assessment. The deadline to pass the assessment is April 7, 2023 at 5:00 pm.
+
+```{r}
+#assessment
+
+#what is the average NOx emissions across regulated counties in the summer of 2007?
+
+#keep only regulated counties in the summer of 2007 and find avg
+
+#nbp = 1 --> regulated 
+#smm = 1 --> summer 
+#year = 2007
+
+df_avg <- df_new_merge_data %>%
+  filter(nbp == 1, smm == 1, Year == 2007)%>%
+  group_by(County,State) %>%
+  summarize(NOx..tons.= mean(NOx..tons.))
+  
+
+
+#summarize(average = mean(NOx..tons.))
+
+average <- mean(df_avg$NOx..tons.)
+
+average
+```
