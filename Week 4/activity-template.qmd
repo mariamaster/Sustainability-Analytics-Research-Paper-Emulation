@@ -1,0 +1,78 @@
+---
+title: "2023 FIRE198 Sustainability Analytics Week 4 In-class Activity"
+format: html
+editor: visual
+---
+
+Step 1: Declare that you will use the **tidyverse** package.
+
+```{r}
+library("tidyverse")
+```
+
+Step 2: Upload **nayro.csv** into the RStudio environment.
+
+```{r}
+df<-read.csv("nayro.csv")
+```
+
+Step 3: Create a new dataframe that contains only data in Prince George's County, Maryland.
+
+```{r}
+glimpse(df)
+```
+
+```{r}
+#Option 1
+df2<-df %>%
+  filter(state=="MARYLAND", countyname=="Prince George's County")
+
+#Option 2
+df2<-df %>%
+  filter(state=="MARYLAND" & countyname=="Prince George's County")
+
+#Option 3
+df2<-df %>%
+  filter(state=="MARYLAND") %>%
+  filter(countyname=="Prince George's County")
+```
+
+Step 4: Create a new dataframe that contains data for **both** Prince George's County and Montgomery County in Maryland.
+
+```{r}
+
+```
+
+Step 5: Create a new dataframe containing data from **both** the county **you and the person next to you** are from. Did any pollutant exceed the national standard in 2022?
+
+```{r}
+
+```
+
+Step 6: How many counties exceed that national standard for **PM-2.5 (2006)** in the year **2022?**
+
+```{r}
+df_pm<-df %>%
+  filter(pollutant=="PM-2.5 (2006)") %>%
+  filter(!is.na(yr2022))
+```
+
+Step 7: Create a new column that shows the total number of people living in counties that exceeded the national standard for **PM-2.5 (2006)** in **2022?**
+
+```{r}
+df_pm2<-df_pm %>%
+  mutate(total_pop=sum(population))
+```
+
+Step 8: Create a new column in the dataframe **df_pm2** to indicate whether the column class is serious.
+
+Name the new column s**erious_num**.
+
+Let **serious_num** equal to 1 if the column class is equal to **Serious**.
+
+Let **serious_num** equal 0 if the column class is not equal to **Serious**.
+
+```{r}
+df_pm3<-df_pm2 %>%
+  mutate(serious=ifelse(class=="Serious",1,0))
+```
